@@ -19,9 +19,6 @@ public class FluxTest {
                 .retry(5)
                 .subscribe(System.out::println);
         Thread.sleep(20000);
-
-//                .zipWith(Flux.range(1, 1000))
-//                .
     }
 
     private Mono<String> nioCall(int idx, long elapsed) {
