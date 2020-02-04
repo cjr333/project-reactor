@@ -8,6 +8,13 @@ public class StateOrientedService {
   private int key;
 
   public Mono<Integer> emit() {
-    return Mono.just(key + 1).delayElement(Duration.ofSeconds(1)).doOnNext(nextKey -> key = nextKey);
+    System.out.println("Emit: " + key);
+    if (key > 5) {
+      return Mono.never();
+    } else {
+      return Mono.just(key + 1).doOnNext(nextKey -> {
+        key = nextKey;
+      });
+    }
   }
 }

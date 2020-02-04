@@ -71,9 +71,9 @@ public class MyServiceTest {
     myService.concatMap()
         .take(10)
         .subscribe(System.out::println);
-    myService.concatMap()
-        .take(10)
-        .subscribe(System.out::println);
+//    myService.concatMap()
+//        .take(40)
+//        .subscribe(System.out::println);
     Thread.sleep(20000);
   }
 }
