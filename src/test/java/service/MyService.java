@@ -80,8 +80,6 @@ public class MyService {
 
   public Flux<Integer> concatMap() {
     return Flux.range(1, Integer.MAX_VALUE)
-        .doOnRequest(count -> System.out.println("request of " + count))
-        .doOnNext(idx -> System.out.println("[doOnNext] idx:" + idx))
-        .concatMap(i -> stateOrientedService.emit(), 1);
+        .concatMap(i -> stateOrientedService.emit(), 32);
   }
 }
