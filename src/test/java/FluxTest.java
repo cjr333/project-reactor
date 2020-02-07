@@ -33,4 +33,28 @@ public class FluxTest {
             throw new RuntimeException(elapsed + " is less than 1000");
         }
     }
+
+    @Test
+    public void onErrorTest() {
+        Mono.just(1 / 0)
+            .doOnNext(integer -> System.out.println("Next: " + integer))
+            .doOnError(throwable -> System.out.println("Error: " + throwable.getMessage()))
+            .subscribe();
+    }
+
+    @Test
+    public void onErrorTestWithTryCatch() {
+        innerError()
+            .doOnNext(integer -> System.out.println("Next: " + integer))
+            .doOnError(throwable -> System.out.println("Error: " + throwable.getMessage()))
+            .subscribe();
+    }
+
+    private Mono<Integer> innerError() {
+        try {
+            return Mono.just(1 / 0);
+        } catch (Exception ex) {
+            return Mono.error(ex);
+        }
+    }
 }
