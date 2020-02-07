@@ -43,7 +43,7 @@ public class FluxTest {
     }
 
     @Test
-    public void onErrorTestWithTryCatch() {
+    public void onErrorTestUsingTryCatch() {
         innerError()
             .doOnNext(integer -> System.out.println("Next: " + integer))
             .doOnError(throwable -> System.out.println("Error: " + throwable.getMessage()))
@@ -56,5 +56,13 @@ public class FluxTest {
         } catch (Exception ex) {
             return Mono.error(ex);
         }
+    }
+
+    @Test
+    public void onErrorTestUsingSupplier() {
+        Mono.fromSupplier(() -> 1 / 0)
+            .doOnNext(integer -> System.out.println("Next: " + integer))
+            .doOnError(throwable -> System.out.println("Error: " + throwable.getMessage()))
+            .subscribe();
     }
 }
