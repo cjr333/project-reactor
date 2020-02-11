@@ -1,10 +1,12 @@
 package service;
 
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -81,5 +83,24 @@ public class MyService {
   public Flux<Integer> concatMap() {
     return Flux.range(1, Integer.MAX_VALUE)
         .concatMap(i -> stateOrientedService.emit(), 32);
+  }
+
+  public Mono<List<Chunk>> limitWithEmitterProcessor(int itemCount) {
+    EmitterProcessor<Boolean> emitterProcessor = EmitterProcessor.create();
+    AtomicInteger subscribed = new AtomicInteger();
+
+    return Flux.interval(Duration.ofMillis(500))
+        .doOnRequest(count -> System.out.println("request of " + count))
+        .doOnNext(idx -> System.out.println("[doOnNext] idx:" + idx))
+        .map(Chunk::getInstance)
+        .doOnNext(chunk -> {
+          System.out.println("[doOnNext] idx:" + chunk.getLastKey());
+          if (subscribed.addAndGet(chunk.getCount()) >= itemCount) {
+            emitterProcessor.onNext(true);
+            emitterProcessor.onComplete();
+          }
+        })
+        .takeUntilOther(emitterProcessor)
+        .collectList();
   }
 }
