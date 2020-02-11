@@ -14,6 +14,7 @@ public class MyServiceTest {
     AtomicInteger subscribed = new AtomicInteger();
     int itemCount = 10;
     myService.unlimit()
+        .doOnComplete(() -> System.out.println("Completion!!!!"))
         .subscribe(new BaseSubscriber<Chunk>() {
           @Override
           public void hookOnSubscribe(Subscription subscription) {
@@ -34,7 +35,9 @@ public class MyServiceTest {
 
   @Test
   public void limitTest() throws InterruptedException {
-    myService.limit(10).subscribe();
+    myService.limit(10)
+        .doOnComplete(() -> System.out.println("Completion!!!!"))
+        .subscribe();
     Thread.sleep(20000);
   }
 
@@ -48,20 +51,19 @@ public class MyServiceTest {
    * 조합기는 take 와 무관하게 동작하기 때문에 조합하다가 stack overflow 가 발생한다.
    */
   //  @Test
-//  public void recursiveTest() throws InterruptedException {
-//    myService.recursive(1)
-//        .take(10)
-//        .subscribe(System.out::println);
-//    Thread.sleep(20000);
-//  }
-
+  //  public void recursiveTest() throws InterruptedException {
+  //    myService.recursive(1)
+  //        .take(10)
+  //        .subscribe(System.out::println);
+  //    Thread.sleep(20000);
+  //  }
   @Test
   public void generateTest() throws InterruptedException {
     myService.generate(1)
         .take(10)
         .subscribe(System.out::println);
     myService.generate(10)
-                .take(10)
+        .take(10)
         .subscribe(System.out::println);
     Thread.sleep(20000);
   }
@@ -71,9 +73,17 @@ public class MyServiceTest {
     myService.concatMap()
         .take(10)
         .subscribe(System.out::println);
-//    myService.concatMap()
-//        .take(40)
-//        .subscribe(System.out::println);
+    //    myService.concatMap()
+    //        .take(40)
+    //        .subscribe(System.out::println);
+    Thread.sleep(20000);
+  }
+
+  @Test
+  public void emitterProcessorTest() throws InterruptedException {
+    myService.limitWithEmitterProcessor(10)
+        .doOnSuccess(chunks -> System.out.println("Success with items - " + chunks.size()))
+        .subscribe();
     Thread.sleep(20000);
   }
 }
