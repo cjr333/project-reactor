@@ -65,4 +65,14 @@ public class FluxTest {
             .doOnError(throwable -> System.out.println("Error: " + throwable.getMessage()))
             .subscribe();
     }
+
+    @Test
+    public void concatMapTest() throws InterruptedException {
+        Flux.range(0, 100)
+            .map(i -> System.currentTimeMillis())
+            .concatMap(upstream -> Mono.just(String.format("%d:%d", upstream, System.currentTimeMillis())).delayElement(Duration.ofMillis(500)), 1)
+            .take(50)
+            .subscribe(System.out::println);
+        Thread.sleep(30000);
+    }
 }
