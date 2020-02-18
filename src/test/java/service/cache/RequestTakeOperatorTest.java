@@ -61,4 +61,28 @@ public class RequestTakeOperatorTest {
 
     Thread.sleep(5000);
   }
+
+  @Test
+  public void testMultiComplete() throws InterruptedException {
+    Publisher<String> push_pull = RequestTakeMultiOperator.<Long, String>builder().source(
+        Flux.range(0, 5)
+            .map(Long::valueOf)
+            .doOnRequest(value -> System.out.println("[doOnRequest] " + value))
+            .doOnNext(aLong -> System.out.println("[doOnNext] " + aLong))
+            //            .take(20)
+            .doOnComplete(() -> System.out.println("[doOnComplete]"))
+    ).accumulator((aLong, s) -> s += aLong)
+        .initValue("")
+        .takeWhile(s -> s.length() < 20)
+        .fetchSize(5).build();
+
+    push_pull.subscribe(new BaseSubscriber<String>() {
+      @Override
+      protected void hookOnNext(String value) {
+        System.out.println("[hookOnNext] " + value);
+      }
+    });
+
+    Thread.sleep(5000);
+  }
 }
