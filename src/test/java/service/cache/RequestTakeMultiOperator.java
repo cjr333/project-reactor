@@ -78,6 +78,7 @@ public class RequestTakeMultiOperator<T, A> implements Publisher<A> {
 
     @Override
     public void onComplete() {
+      actual.onNext(accumulated);
       actual.onComplete();
     }
 
