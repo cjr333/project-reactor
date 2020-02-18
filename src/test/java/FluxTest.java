@@ -75,4 +75,15 @@ public class FluxTest {
             .subscribe(System.out::println);
         Thread.sleep(30000);
     }
+
+    @Test
+    public void doOnNext() throws InterruptedException {
+        Flux.interval(Duration.ofMillis(200))
+            .doOnNext(aLong -> System.out.println("[doOnNext-Pre]" + aLong))
+            .flatMap(aLong -> Mono.just(aLong).delayElement(Duration.ofSeconds(1)))
+            .take(10)
+            .doOnNext(aLong -> System.out.println("[doOnNext-Post]" + aLong))
+            .subscribe(System.out::println);
+        Thread.sleep(30000);
+    }
 }
