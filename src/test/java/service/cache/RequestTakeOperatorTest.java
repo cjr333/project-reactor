@@ -47,7 +47,7 @@ public class RequestTakeOperatorTest {
             .doOnNext(aLong -> System.out.println("[doOnNext] " + aLong))
             //            .take(20)
             .doOnComplete(() -> System.out.println("[doOnComplete]"))
-    ).accumulator((aLong, s) -> s += aLong)
+    ).accumulator((s, aLong) -> s += aLong)
         .initValue("")
         .takeWhile(s -> s.length() < 20)
         .fetchSize(5).build();
@@ -71,7 +71,7 @@ public class RequestTakeOperatorTest {
             .doOnNext(aLong -> System.out.println("[doOnNext] " + aLong))
             //            .take(20)
             .doOnComplete(() -> System.out.println("[doOnComplete]"))
-    ).accumulator((aLong, s) -> s += aLong)
+    ).accumulator((s, aLong) -> s += aLong)
         .initValue("")
         .takeWhile(s -> s.length() < 20)
         .fetchSize(5).build();

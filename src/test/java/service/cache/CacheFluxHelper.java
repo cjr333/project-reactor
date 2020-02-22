@@ -9,17 +9,18 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 public class CacheFluxHelper<KEY, VALUE> {
-  private final Supplier<Flux<VALUE>> supplier;
+  private final Function<KEY, Flux<VALUE>> supplier;
   private final Class<VALUE> valueClass;
   private Map<KEY, ? super List> cachedEntries;
 
   @Builder
-  public CacheFluxHelper(Supplier<Flux<VALUE>> supplier, Class<VALUE> valueClass, Duration expire, Integer maxEntry) {
+  public CacheFluxHelper(Function<KEY, Flux<VALUE>> supplier, Class<VALUE> valueClass, Duration expire, Integer maxEntry) {
     this.supplier = supplier;
     this.valueClass = valueClass;
 
@@ -34,6 +35,6 @@ public class CacheFluxHelper<KEY, VALUE> {
   public Flux<VALUE> get(KEY key) {
     return CacheFlux
         .lookup(cachedEntries, key, valueClass)
-        .onCacheMissResume(supplier);
+        .onCacheMissResume(supplier.apply(key));
   }
 }

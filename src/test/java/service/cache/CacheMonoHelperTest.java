@@ -15,7 +15,7 @@ public class CacheMonoHelperTest {
   @Test
   public void cacheMonoHelperTest() throws InterruptedException {
     CacheMonoHelper<Integer, Long> cacheMonoHelper = CacheMonoHelper.<Integer, Long>builder()
-        .supplier(() -> Mono.just(System.currentTimeMillis()))
+        .supplier((key) -> Mono.just(System.currentTimeMillis() + key))
         .expire(Duration.ofSeconds(10))
         .maxEntry(2)
         .build();

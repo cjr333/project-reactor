@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 public class RequestTakeMultiOperator<T, A> implements Publisher<A> {
   private final Publisher<T> source;
   @Builder.Default private final long fetchSize = 5;
-  private BiFunction<T, A, A> accumulator;
+  private BiFunction<A, T, A> accumulator;
   private A initValue;
   private Predicate<A> takeWhile;
 
@@ -31,7 +31,7 @@ public class RequestTakeMultiOperator<T, A> implements Publisher<A> {
   static final class RequestTakeMultiInner<T, A> implements Subscriber<T>, Subscription {
     private final Subscriber<? super A> actual;
     private final long fetchSize;
-    private BiFunction<T, A, A> accumulator;
+    private BiFunction<A, T, A> accumulator;
     private A accumulated;
     private Predicate<A> takeWhile;
     private long actualRequest;
@@ -40,7 +40,7 @@ public class RequestTakeMultiOperator<T, A> implements Publisher<A> {
     private Subscription current;
 
     @Builder
-    RequestTakeMultiInner(Subscriber<? super A> actual, long fetchSize, BiFunction<T, A, A> accumulator, A initValue, Predicate<A> takeWhile) {
+    RequestTakeMultiInner(Subscriber<? super A> actual, long fetchSize, BiFunction<A, T, A> accumulator, A initValue, Predicate<A> takeWhile) {
       this.actual = actual;
       this.fetchSize = fetchSize;
       this.accumulator = accumulator;
@@ -57,7 +57,7 @@ public class RequestTakeMultiOperator<T, A> implements Publisher<A> {
 
     @Override
     public void onNext(T t) {
-      accumulated = accumulator.apply(t, accumulated);
+      accumulated = accumulator.apply(accumulated, t);
       if (!takeWhile.test(accumulated)) {
         actual.onNext(accumulated);
         current.cancel();
