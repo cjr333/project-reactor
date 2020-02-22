@@ -10,7 +10,7 @@ public class CacheFluxHelperTest {
   @Test
   public void cacheMonoHelperTest() throws InterruptedException {
     CacheFluxHelper<Integer, Long> cacheFluxHelper = CacheFluxHelper.<Integer, Long>builder()
-        .supplier(() -> Flux.interval(Duration.ofMillis(200)).map(aLong -> System.currentTimeMillis() + aLong).take(3))
+        .supplier((key) -> Flux.interval(Duration.ofMillis(200)).map(aLong -> System.currentTimeMillis() + key).take(3))
         .expire(Duration.ofSeconds(10))
         .maxEntry(2)
         .build();

@@ -9,16 +9,17 @@ import reactor.core.publisher.Signal;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 public class CacheMonoHelper<KEY, VALUE> {
-  private final Supplier<Mono<VALUE>> supplier;
+  private final Function<KEY, Mono<VALUE>> supplier;
   private Map<KEY, ? super Signal<? extends VALUE>> cachedEntries;
 
   @Builder
-  public CacheMonoHelper(Supplier<Mono<VALUE>> supplier, Duration expire, Integer maxEntry) {
+  public CacheMonoHelper(Function<KEY, Mono<VALUE>> supplier, Duration expire, Integer maxEntry) {
     this.supplier = supplier;
 
     Cache<KEY, ? super Signal<? extends VALUE>> cache = Caffeine
@@ -32,6 +33,6 @@ public class CacheMonoHelper<KEY, VALUE> {
   public Mono<VALUE> get(KEY key) {
     return CacheMono
         .lookup(cachedEntries, key)
-        .onCacheMissResume(supplier);
+        .onCacheMissResume(supplier.apply(key));
   }
 }
