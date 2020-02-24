@@ -17,6 +17,7 @@ public class StepVerifierTest {
 
         StepVerifier.create(Flux.range(0, 10))
                 .expectSubscription()
+                .consumeNextWith(System.out::println)
                 .recordWith(ArrayList::new)
                 .thenConsumeWhile(integer -> integer < 10)
                 .consumeRecordedWith(this::verifyList)
