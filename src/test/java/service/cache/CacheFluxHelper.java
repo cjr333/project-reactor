@@ -35,6 +35,6 @@ public class CacheFluxHelper<KEY, VALUE> {
   public Flux<VALUE> get(KEY key) {
     return CacheFlux
         .lookup(cachedEntries, key, valueClass)
-        .onCacheMissResume(supplier.apply(key));
+        .onCacheMissResume(Flux.defer(() -> supplier.apply(key)));
   }
 }
