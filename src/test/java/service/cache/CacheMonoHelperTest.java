@@ -4,6 +4,7 @@ import org.junit.Test;
 import reactor.cache.CacheMono;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Signal;
+import reactor.test.StepVerifier;
 import reactor.util.context.Context;
 
 import java.time.Duration;
@@ -44,6 +45,42 @@ public class CacheMonoHelperTest {
     cacheMonoHelper.get(1).subscribe(logTimestampWithExpect("new ts because of max entry"));   // expect new ts
 
     Thread.sleep(3000);
+  }
+
+  @Test
+  public void cacheMonoHelperErrorTest() throws InterruptedException {
+    final long startTs = System.currentTimeMillis();
+    CacheMonoHelper<Integer, Long> cacheMonoHelper = CacheMonoHelper.<Integer, Long>builder()
+        .supplier((key) -> {
+          System.out.println("Call supplier");    // 캐시된 경우 호출되면 안됨
+          if (System.currentTimeMillis() - startTs < 1000) {
+            return Mono.error(new RuntimeException("test exception"));
+          } else {
+            return Mono.just(System.currentTimeMillis() + key);
+          }
+        })
+        .expire(Duration.ofSeconds(5))
+        .maxEntry(2)
+        .build();
+
+    StepVerifier.create(cacheMonoHelper.get(1))
+        .expectErrorMessage("test exception")
+        .verify();
+
+    Thread.sleep(2000);
+
+    // Error Cached
+    StepVerifier.create(cacheMonoHelper.get(1))
+        .expectErrorMessage("test exception")
+        .verify();
+
+    // Cache expire
+    Thread.sleep(5000);
+
+    StepVerifier.create(cacheMonoHelper.get(1))
+        .expectNextCount(1)
+        .expectComplete()
+        .verify();
   }
 
   private Consumer<Long> logTimestampWithExpect(String expect) {

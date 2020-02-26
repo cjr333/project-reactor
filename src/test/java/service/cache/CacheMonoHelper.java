@@ -15,23 +15,26 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 public class CacheMonoHelper<KEY, VALUE> {
   private final Function<KEY, Mono<VALUE>> supplier;
-  private Map<KEY, ? super Signal<? extends VALUE>> cachedEntries;
+  private Cache<KEY, ? super Signal<? extends VALUE>> cache;
 
   @Builder
   public CacheMonoHelper(Function<KEY, Mono<VALUE>> supplier, Duration expire, Integer maxEntry) {
     this.supplier = supplier;
 
-    Cache<KEY, ? super Signal<? extends VALUE>> cache = Caffeine
+    cache = Caffeine
         .newBuilder()
         .expireAfterWrite(defaultIfNull(expire, Duration.ofMinutes(1)))
         .maximumSize(defaultIfNull(maxEntry, 100))
         .build();
-    cachedEntries = cache.asMap();
   }
 
   public Mono<VALUE> get(KEY key) {
     return CacheMono
-        .lookup(cachedEntries, key)
+        .lookup(cache.asMap(), key)
         .onCacheMissResume(Mono.defer(() -> supplier.apply(key)));
+  }
+
+  public void clear() {
+    cache.invalidateAll();
   }
 }
