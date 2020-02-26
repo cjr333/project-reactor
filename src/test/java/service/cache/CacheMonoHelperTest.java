@@ -15,7 +15,10 @@ public class CacheMonoHelperTest {
   @Test
   public void cacheMonoHelperTest() throws InterruptedException {
     CacheMonoHelper<Integer, Long> cacheMonoHelper = CacheMonoHelper.<Integer, Long>builder()
-        .supplier((key) -> Mono.just(System.currentTimeMillis() + key))
+        .supplier((key) -> {
+          System.out.println("Call supplier");    // 캐시된 경우 호출되면 안됨
+          return Mono.just(System.currentTimeMillis() + key);
+        })
         .expire(Duration.ofSeconds(10))
         .maxEntry(2)
         .build();

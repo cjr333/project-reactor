@@ -10,7 +10,6 @@ import reactor.core.publisher.Signal;
 import java.time.Duration;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
@@ -33,6 +32,6 @@ public class CacheMonoHelper<KEY, VALUE> {
   public Mono<VALUE> get(KEY key) {
     return CacheMono
         .lookup(cachedEntries, key)
-        .onCacheMissResume(supplier.apply(key));
+        .onCacheMissResume(Mono.defer(() -> supplier.apply(key)));
   }
 }
