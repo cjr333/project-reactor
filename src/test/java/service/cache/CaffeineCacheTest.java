@@ -58,7 +58,7 @@ public class CaffeineCacheTest {
 
     Mono<List<String>> result = cache.getIfPresent(key);
     if (result == null) {
-      result = isSvcIdAvailable("2");
+      result = checkInput("2");
       cache.put(key, result);
     }
     result.subscribe(aLong -> System.out.println("result: " + aLong));
@@ -78,7 +78,7 @@ public class CaffeineCacheTest {
         .onErrorResume(e -> Mono.error(new IllegalArgumentException()));
   }
 
-  public Mono<List<String>> isSvcIdAvailable(String input) {
+  public Mono<List<String>> checkInput(String input) {
     return generateSampleList()
         .flatMap(sample -> {
           if (sample.equals(input)){
