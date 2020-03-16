@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 
 public class CacheMonoHelperTest {
   @Test
-  public void cacheMonoHelperTest() throws InterruptedException {
+  public void success() throws InterruptedException {
     CacheMonoHelper<Integer, Long> cacheMonoHelper = CacheMonoHelper.<Integer, Long>builder()
         .supplier((key) -> {
           System.out.println("Call supplier");    // 캐시된 경우 호출되면 안됨
@@ -48,7 +48,7 @@ public class CacheMonoHelperTest {
   }
 
   @Test
-  public void cacheMonoHelperErrorTest() throws InterruptedException {
+  public void errorCacheExpire() throws InterruptedException {
     final long startTs = System.currentTimeMillis();
     CacheMonoHelper<Integer, Long> cacheMonoHelper = CacheMonoHelper.<Integer, Long>builder()
         .supplier((key) -> {
@@ -60,6 +60,7 @@ public class CacheMonoHelperTest {
           }
         })
         .expire(Duration.ofSeconds(5))
+        .errorExpire(Duration.ofSeconds(2))
         .maxEntry(2)
         .build();
 
@@ -67,16 +68,52 @@ public class CacheMonoHelperTest {
         .expectErrorMessage("test exception")
         .verify();
 
-    Thread.sleep(2000);
+    Thread.sleep(1000);
 
     // Error Cached
     StepVerifier.create(cacheMonoHelper.get(1))
         .expectErrorMessage("test exception")
         .verify();
 
-    // Cache expire
-    Thread.sleep(5000);
+    Thread.sleep(2000);
 
+    // Error Cached expired
+    StepVerifier.create(cacheMonoHelper.get(1))
+        .expectNextCount(1)
+        .expectComplete()
+        .verify();
+  }
+
+  @Test
+  public void notCacheForError() throws InterruptedException {
+    final long startTs = System.currentTimeMillis();
+    final AtomicInteger index = new AtomicInteger(0);
+    CacheMonoHelper<Integer, Long> cacheMonoHelper = CacheMonoHelper.<Integer, Long>builder()
+        .supplier((key) -> {
+          System.out.println("Call supplier");    // 캐시된 경우 호출되면 안됨
+          if (System.currentTimeMillis() - startTs < 1000) {
+            return Mono.error(new RuntimeException("test exception" + index.getAndIncrement()));
+          } else {
+            return Mono.just(System.currentTimeMillis() + key);
+          }
+        })
+        .expire(Duration.ofSeconds(5))
+        .errorExpire(Duration.ofSeconds(0))
+        .maxEntry(2)
+        .build();
+
+    StepVerifier.create(cacheMonoHelper.get(1))
+        .expectErrorMessage("test exception0")
+        .verify();
+
+    // Error not cached
+    StepVerifier.create(cacheMonoHelper.get(1))
+        .expectErrorMessage("test exception1")
+        .verify();
+
+    Thread.sleep(1000);
+
+    // success
     StepVerifier.create(cacheMonoHelper.get(1))
         .expectNextCount(1)
         .expectComplete()

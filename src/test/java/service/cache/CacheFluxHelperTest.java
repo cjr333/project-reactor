@@ -2,6 +2,7 @@ package service.cache;
 
 import org.junit.Test;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -37,6 +38,51 @@ public class CacheFluxHelperTest {
     cacheFluxHelper.get(1).take(3).subscribe(logTimestampWithExpect("new ts because of max entry"));   // expect new ts
 
     Thread.sleep(3000);
+  }
+
+  @Test
+  public void cacheFluxHelperErrorTest() throws InterruptedException {
+    final long startTs = System.currentTimeMillis();
+    CacheFluxHelper<Integer, Long> cacheFluxHelper = CacheFluxHelper.<Integer, Long>builder()
+        .supplier((key) -> {
+          System.out.println("Call supplier");    // 캐시된 경우 호출되면 안됨
+          if (System.currentTimeMillis() - startTs < 1000) {
+            return Flux.range(0, 3).flatMap(integer -> {
+              if (integer == 2) {
+                return Flux.<Long>error(new RuntimeException("test exception"));
+              } else {
+                return Flux.just(System.currentTimeMillis() + integer);
+              }
+            });
+          } else {
+            return Flux.range(0, 3).map(integer -> System.currentTimeMillis() + integer);
+          }
+        })
+        .expire(Duration.ofSeconds(5))
+        .errorExpire(Duration.ofSeconds(2))
+        .maxEntry(2)
+        .build();
+
+    StepVerifier.create(cacheFluxHelper.get(1))
+        .expectNextCount(2)
+        .expectErrorMessage("test exception")
+        .verify();
+
+    Thread.sleep(1000);
+
+    // Error Cached
+    StepVerifier.create(cacheFluxHelper.get(1))
+        .expectNextCount(2)
+        .expectErrorMessage("test exception")
+        .verify();
+
+    Thread.sleep(2000);
+
+    // Error Cached expired
+    StepVerifier.create(cacheFluxHelper.get(1))
+        .expectNextCount(3)
+        .expectComplete()
+        .verify();
   }
 
   private Consumer<Long> logTimestampWithExpect(String expect) {
