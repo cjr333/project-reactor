@@ -95,4 +95,30 @@ public class FluxTest {
         .doOnNext(integer -> System.out.println("Post - " + integer))
         .blockLast();
   }
+
+  @Test
+  public void retryTest() throws InterruptedException {
+    source(5)
+        .retry(2).subscribe(
+        integer -> System.out.println("element: " + integer),
+        throwable -> System.err.println(throwable.getMessage())
+    );
+    Thread.sleep(3000);
+
+    deferred(5)
+        .retry(2).subscribe(
+        integer -> System.out.println("element: " + integer),
+        throwable -> System.err.println(throwable.getMessage())
+    );
+    Thread.sleep(3000);
+  }
+
+  private Flux<Integer> deferred(int count) {
+    return Flux.defer(() -> source(count));
+  }
+
+  private Flux<Integer> source(int count) {
+    System.out.println("called source");
+    return Flux.range(0, count).flatMap(i -> i > 3 ? Flux.error(new IndexOutOfBoundsException("out of range")) : Flux.just(i));
+  }
 }
