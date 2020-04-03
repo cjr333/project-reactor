@@ -1,5 +1,6 @@
 import org.junit.Test;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 
@@ -42,5 +43,19 @@ public class MonoTest {
         .retryBackoff(3, Duration.ofMillis(234))
         .subscribe(null, System.out::println);
     Thread.sleep(5000);
+  }
+
+  @Test
+  public void monoVoidTest() {
+    StepVerifier.create(
+        voidSource(false)
+            .retryBackoff(3, Duration.ofMillis(100), Duration.ofMillis(100))
+            .doOnError(throwable -> System.out.println("[doOnError] " + throwable.getMessage()))
+    )
+        .verifyError(RuntimeException.class);
+  }
+
+  private Mono<Void> voidSource(boolean success) {
+    return Mono.defer(() -> success ? Mono.empty() : Mono.error(new RuntimeException("operating failed")));
   }
 }
