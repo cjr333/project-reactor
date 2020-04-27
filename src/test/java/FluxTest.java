@@ -1,9 +1,11 @@
 import org.junit.Test;
+import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FluxTest {
   AtomicInteger retryIndex = new AtomicInteger(0);
@@ -120,5 +122,21 @@ public class FluxTest {
   private Flux<Integer> source(int count) {
     System.out.println("called source");
     return Flux.range(0, count).flatMap(i -> i > 3 ? Flux.error(new IndexOutOfBoundsException("out of range")) : Flux.just(i));
+  }
+
+  // 여러가지로 테스트해 본 결과 doOn~ 핸들러 조합 시 doOnCancel 은 제일 먼저 나와야지 동작이 되며 나머지는 순서에 크게 상관이 없는 듯 하다.
+  @Test
+  public void handlerOrderTest() throws InterruptedException {
+    AtomicReference<Subscription> subscriptionRef = new AtomicReference<>();
+    Flux.range(0, 10).delayElements(Duration.ofMillis(500))
+        .doOnComplete(() -> System.out.println("MergeWith completed"))
+        .doOnCancel(() -> System.out.println("MergeWith canceled"))
+        .doOnNext(integer -> System.out.println("data: " + integer))
+        .doOnSubscribe(subscriptionRef::set)
+        .subscribe();
+
+    Thread.sleep(30000);
+//    subscriptionRef.get().cancel();
+    Thread.sleep(3000);
   }
 }
